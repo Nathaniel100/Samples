@@ -12,3 +12,5 @@ link_directories(/usr/local/lib)
 link_directories(/usr/local/opt/openssl/lib)
 
 add_subdirectory(cpprest)
+
+add_subdirectory(stl)
