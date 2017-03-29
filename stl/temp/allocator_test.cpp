@@ -14,7 +14,9 @@ using StlVector = std::vector<T, stl::Allocator<T>>;
 struct Foo {
     int i_;
     std::string s_;
-    Foo(int i = 0, std::string s = std::string()): i_{i}, s_{std::move(s)} {}
+    Foo(int i = 0, std::string s = std::string()): i_{i}, s_{std::move(s)} {
+        std::cout << "Constructor Foo\n";
+    }
 };
 
 std::ostream& operator<<(std::ostream& out, const Foo& f) {

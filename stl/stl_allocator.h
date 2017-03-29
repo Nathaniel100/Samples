@@ -15,10 +15,10 @@ class Allocator {
 public:
     using value_type = T;
     T* allocate(size_t n) {
-        return new T[n];
+        return static_cast<T*>(::operator new(n * sizeof(T)));
     }
     void deallocate(T* p, size_t n) {
-        delete [] p;
+        ::operator delete(p);
     }
 };
 
