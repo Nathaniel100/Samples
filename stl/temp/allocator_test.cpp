@@ -9,7 +9,7 @@
 #include <string>
 
 template<class T>
-using StlVector = std::vector<T, stl::Allocator<T>>;
+using my_stl_vector = std::vector<T, my_stl::allocator<T>>;
 
 struct Foo {
     int i_;
@@ -37,16 +37,40 @@ template<class Iterator>
 typename std::enable_if<has_ostream_operator<iterator_value_type<Iterator>>::value>::type
 print(Iterator begin, Iterator end) {
     for(auto it = begin; it != end; ++it) {
-        std::cout << *it << "\n";
+        std::cout << *it << " ";
     }
+    std::cout << "\n";
 }
 
+#define STATIC_ASSERT( ... ) static_assert(__VA_ARGS__, #__VA_ARGS__)
+
 int main() {
-    StlVector<int> v = {1, 2, 3, 4, 5, 6, 7};
+    my_stl_vector<int> v = {1, 2, 3, 4, 5, 6, 7};
     print(v.begin(), v.end());
 
-    StlVector<Foo> fooV = {{1, "a"}, {2, "b"}, {3, "c"}};
+    my_stl_vector<Foo> fooV = {{1, "a"}, {2, "b"}, {3, "c"}};
     print(fooV.begin(), fooV.end());
+
+    my_stl_vector<const int> cv = {1, 2, 3, 4, 5, 6, 7};
+    print(cv.begin(), cv.end());
+
+    using alloc = my_stl::allocator<int>;
+    using std_alloc = std::allocator<int>;
+    STATIC_ASSERT(std::is_same<alloc::value_type, std_alloc::value_type>::value);
+    STATIC_ASSERT(std::is_same<alloc::pointer, std_alloc::pointer>::value);
+    STATIC_ASSERT(std::is_same<alloc::const_pointer, std_alloc::const_pointer>::value);
+    STATIC_ASSERT(std::is_same<alloc::difference_type, std_alloc::difference_type>::value);
+    STATIC_ASSERT(std::is_same<alloc::size_type, std_alloc::size_type>::value);
+    STATIC_ASSERT(std::is_same<alloc::reference, std_alloc::reference>::value);
+    STATIC_ASSERT(std::is_same<alloc::const_reference, std_alloc::const_reference>::value);
+
+    using const_alloc = my_stl::allocator<const int>;
+    using std_const_alloc = std::allocator<const int>;
+    STATIC_ASSERT(std::is_same<const_alloc::value_type, std_const_alloc::value_type>::value);
+    STATIC_ASSERT(std::is_same<const_alloc::pointer, std_const_alloc::pointer>::value);
+    STATIC_ASSERT(std::is_same<const_alloc::const_pointer, std_const_alloc::const_pointer>::value);
+    STATIC_ASSERT(std::is_same<const_alloc::difference_type, std_const_alloc::difference_type>::value);
+    STATIC_ASSERT(std::is_same<const_alloc::size_type, std_const_alloc::size_type>::value);
     return 0;
 }
 
