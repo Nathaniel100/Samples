@@ -5,8 +5,8 @@
 #ifndef SAMPLES_STL_ALLOCATOR_H
 #define SAMPLES_STL_ALLOCATOR_H
 
-#include <stdlib.h>
-#include <stddef.h>
+#include <new>
+//#include <iostream>
 
 namespace my_stl {
 
@@ -29,9 +29,12 @@ public:
     };
 
     pointer allocate(size_t n) {
-        return static_cast<pointer>(::operator new(n * sizeof(T)));
+        pointer p = static_cast<pointer>(::operator new(n * sizeof(T)));
+        //std::cout << "Pointer(allocate): " << (size_t)p << "\n";
+        return p;
     }
     void deallocate(pointer p, size_t n) {
+        //std::cout << "Pointer(deallocate): " << (size_t)p << "\n";
         ::operator delete((void *)p);
     }
 };
