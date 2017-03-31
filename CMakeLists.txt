@@ -3,6 +3,8 @@ project(Samples)
 
 set(CMAKE_CXX_STANDARD 11)
 
+add_executable(TestType test_type.cpp)
+
 find_package(Boost REQUIRED COMPONENTS system thread chrono)
 
 include_directories(/usr/local/include)
