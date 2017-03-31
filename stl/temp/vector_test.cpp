@@ -4,6 +4,7 @@
 
 #include "stl_vector.h"
 #include <iostream>
+#include <iomanip>
 
 template<typename T>
 std::ostream& operator<<(std::ostream& s, const my_stl::vector<T>& v) {
@@ -97,11 +98,81 @@ void test_size() {
     std::cout << "After adding elements, numbers.empty(): " << numbers.empty() << '\n';
 }
 
+// minimal C++11 allocator with debug output
+template <class Tp>
+struct NAlloc {
+    typedef Tp value_type;
+    NAlloc() = default;
+    template <class T> NAlloc(const NAlloc<T>&) {}
+    Tp* allocate(std::size_t n) {
+        n *= sizeof(Tp);
+        std::cout << "allocating " << n << " bytes\n";
+        return static_cast<Tp*>(::operator new(n));
+    }
+    void deallocate(Tp* p, std::size_t n) {
+        std::cout << "deallocating " << n*sizeof*p << " bytes\n";
+        ::operator delete(p);
+    }
+};
+template <class T, class U>
+bool operator==(const NAlloc<T>&, const NAlloc<U>&) { return true; }
+template <class T, class U>
+bool operator!=(const NAlloc<T>&, const NAlloc<U>&) { return false; }
+
+void test_reserve() {
+    int sz = 100;
+    std::cout << "using reserve: \n";
+    {
+        my_stl::vector<int, NAlloc<int>> v1;
+        v1.reserve(sz);
+        for(int n = 0; n < sz; ++n)
+            v1.push_back(n);
+        std::cout << "nums contains " << v1.size() << " elements.\n";
+    }
+    std::cout << "not using reserve: \n";
+    {
+        my_stl::vector<int, NAlloc<int>> v1;
+        for(int n = 0; n < sz; ++n)
+            v1.push_back(n);
+        std::cout << "nums contains " << v1.size() << " elements.\n";
+    }
+}
+
+void test_resize() {
+    my_stl::vector<int> c = {1, 2, 3};
+    std::cout << "The vector holds: ";
+    for(auto& el: c) std::cout << el << ' ';
+    std::cout << '\n';
+    c.resize(5);
+    std::cout << "After resize up 5: ";
+    for(auto& el: c) std::cout << el << ' ';
+    std::cout << '\n';
+    c.resize(2);
+    std::cout << "After resize down to 2: ";
+    for(auto& el: c) std::cout << el << ' ';
+    std::cout << '\n';
+}
+
+void test_pushback() {
+    my_stl::vector<std::string> numbers;
+
+    numbers.push_back("abc");
+    std::string s = "def";
+    numbers.push_back(std::move(s));
+
+    std::cout << "vector holds: ";
+    for (auto&& i : numbers) std::cout << i << ' ';
+    std::cout << "\nMoved-from string holds " << s << '\n';
+}
+
 int main() {
     test_simple();
     test_constructor();
     test_assignment();
     test_size();
+    test_resize();
+    test_reserve();
+    test_pushback();
 
     return 0;
 }

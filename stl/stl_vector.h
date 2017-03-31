@@ -13,22 +13,23 @@ class vector_base {
 public:
     using allocator_type = Allocator;
     using value_type = typename allocator_type::value_type;
-    using reference = typename allocator_type::reference;
-    using const_reference = typename allocator_type::const_reference;
-    using pointer = typename allocator_type::pointer;
-    using const_pointer = typename allocator_type::const_pointer;
-    using difference_type = typename allocator_type::difference_type;
-    using size_type = typename allocator_type::size_type;
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
+    using void_pointer = void*;
+    using const_void_pointer = const void*;
+    using difference_type = ptrdiff_t;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = size_t;
     using iterator = pointer;
     using const_iterator = const_pointer ;
 
     explicit vector_base(allocator_type alloc, size_type n) : alloc_{alloc}, start_{nullptr}, end_{nullptr}, cap_end_{
             nullptr} {
-        if (n > 0) {
-            start_ = alloc_.allocate(n);
-            end_ = start_ + n;
-            cap_end_ = end_;
-        }
+        size_type cap = power2up(n);
+        start_ = alloc_.allocate(cap);
+        end_ = start_ + n;
+        cap_end_ = start_ + cap;
     }
 
     vector_base() : vector_base(allocator_type(), 0) {}
@@ -66,7 +67,22 @@ public:
         return *this;
     }
 
+    static inline size_type power2up(size_type v) {
+        if(v == 0) return default_size;
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v |= v >> 32;
+        v++;
+        return v;
+    }
+
 protected:
+    enum { default_size = 4 };
+
     allocator_type alloc_;
     pointer start_;
     pointer end_;
@@ -112,16 +128,16 @@ public:
 
     void push_back(const T& v) {
         if(size() == capacity()) {
-            reserve(power2up(size()));
+            reserve(vector_base<T, Allocator>::power2up(size() + 1));
         }
         *this->end_++ = v;
     }
 
     void push_back(T&& v) {
         if(size() == capacity()) {
-            reserve(power2up(size()));
+            reserve(vector_base<T, Allocator>::power2up(size() + 1));
         }
-        *this->end_++ = v;
+        *this->end_++ = std::move(v);
     }
 
     void pop_back() {
@@ -140,11 +156,20 @@ public:
             for(size_type i = size(); i != s; i--) {
                 pop_back();
             }
-        } else if(s < capacity()) {
+        } else if(s <= capacity()) {
             std::uninitialized_fill(end(), this->start_ + s, T());
         } else {
             size_type old_size = size();
-            reserve(power2up(s));
+            size_type cap = vector_base<T, Allocator>::power2up(s);
+            pointer old_start = this->start_;
+
+            this->start_ = this->alloc_.allocate(cap);
+            this->end_ = this->start_ + s;
+            this->cap_end_ = this->start_ + cap;
+            if(old_start) {
+                std::uninitialized_copy(old_start, old_start + old_size, this->start_);
+                this->alloc_.deallocate(old_start, old_size);
+            }
             std::uninitialized_fill(this->start_ + old_size, end(), T());
         }
     }
@@ -202,19 +227,6 @@ public:
 
 
 private:
-    enum { default_size = 16 };
-    static inline size_type power2up(size_type v) {
-        if(v == 0) return default_size;
-        v--;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        v |= v >> 32;
-        v++;
-        return v;
-    }
 };
 
 
