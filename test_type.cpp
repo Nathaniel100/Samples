@@ -63,7 +63,7 @@ class __test_iterator_category {
 private:
     struct __two {char l; char h;};
     template <class U> static __two __test(...);
-    template <class U> static char __test(typename T::iterator_category* = 0);
+    template <class U> static char __test(typename U::iterator_category* = 0);
 public:
     const static bool value = sizeof(__test<T>(0)) == 1;
 };
