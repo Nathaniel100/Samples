@@ -1,5 +1,7 @@
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <list>
 
 template<class T>
 class test_has_propagate_on_container_copy_assignment {
@@ -41,9 +43,83 @@ struct B {
 template<class T>
 struct Type;
 
+
+struct Base {
+    ~Base() {
+        std::cout << "Destructor Base\n";
+    }
+};
+
+struct Derived : public Base {
+    ~Derived() {
+        std::cout << "Destructor Derived\n";
+    }
+
+};
+
+
+template<class T>
+class __test_iterator_category {
+private:
+    struct __two {char l; char h;};
+    template <class U> static __two __test(...);
+    template <class U> static char __test(typename T::iterator_category* = 0);
+public:
+    const static bool value = sizeof(__test<T>(0)) == 1;
+};
+
+
+template<class T, bool = __test_iterator_category<T>::value>
+class test_iterator_category {
+public:
+    const static bool value = false;
+};
+
+template<class T>
+class test_iterator_category<T, true> {
+public:
+    using type = typename std::iterator_traits<T>::iterator_category;
+    const static bool value = true;
+};
+
+
+template<class Iterator, bool = test_iterator_category<Iterator>::value>
+class is_forward_iterator {
+public:
+    const static bool value = false;
+};
+
+template<class Iterator>
+class is_forward_iterator<Iterator, true> {
+public:
+    const static bool value = std::is_convertible<typename test_iterator_category<Iterator>::type, std::forward_iterator_tag>::value;
+};
+
+template<class Iterator, bool = test_iterator_category<Iterator>::value>
+class is_random_iterator {
+public:
+    const static bool value = false;
+};
+
+template<class Iterator>
+class is_random_iterator<Iterator, true> {
+public:
+    const static bool value = std::is_convertible<typename test_iterator_category<Iterator>::type, std::random_access_iterator_tag>::value;
+};
+
+
 int main() {
     static_assert(std::is_same<has_propagate_on_container_copy_assignment<A<char>>::type, std::true_type>::value, "");
     static_assert(std::is_same<has_propagate_on_container_copy_assignment<B<char>>::type, std::false_type>::value, "");
+
+    static_assert(is_forward_iterator<int>::value, "");
+    static_assert(is_forward_iterator<std::vector<int>::iterator>::value, "");
+    static_assert(is_forward_iterator<std::list<int>::iterator>::value, "");
+    static_assert(!is_forward_iterator<std::istream_iterator<int>>::value, "");
+    static_assert(is_random_iterator<std::istream_iterator<int>>::value, "");
+    static_assert(is_random_iterator<std::vector<int>::iterator>::value, "");
+    static_assert(is_random_iterator<std::list<int>::iterator>::value, "");
     std::cout << "Hello, World!" << std::endl;
+
     return 0;
 }
